@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en-GB"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="50 Days">
+<meta name="theme-color" content="#0b0d0c">
+<title>50 Day Challenge</title>
+<link rel="apple-touch-icon" id="ico" href="">
+<style>
+:root{--bg:#0b0d0c;--card:#151917;--card2:#1c211f;--line:#262c29;--tx:#fff;--mut:#8a948f;--g:#2ee072;--gd:#14472a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Helvetica,Arial,sans-serif}
+#app{max-width:520px;margin:0 auto;padding:16px 16px 110px}
+h1{font-size:13px;letter-spacing:.14em;color:var(--mut);margin:6px 0 14px;font-weight:600;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mut{color:var(--mut);font-size:13px}
+.big{font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.g{color:var(--g)}
+.bar{height:8px;background:var(--card2);border-radius:9px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--g);border-radius:9px;transition:width .4s}
+button,input{font:inherit;color:inherit}
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:11px 14px;font-weight:600;min-height:44px;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.96)}
+.btn.p{background:var(--g);color:#04170b;border-color:var(--g)}
+.btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btns .btn{flex:1;min-width:64px;padding:11px 6px}
+.chk{width:34px;height:34px;border-radius:50%;border:2px solid #3a4540;display:grid;place-items:center;flex:none;background:none;transition:.2s}
+.chk.on{background:var(--g);border-color:var(--g)}
+.chk svg{width:18px;opacity:0}.chk.on svg{opacity:1}
+.top{display:flex;gap:16px;align-items:center}
+.ring{position:relative;width:132px;height:132px;flex:none}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:26px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stats div{background:var(--card2);border-radius:14px;padding:10px;text-align:center}
+.stats b{display:block;font-size:20px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;background:rgba(14,17,16,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{background:none;border:0;color:var(--mut);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:70px;min-height:48px;cursor:pointer}
+nav button.on{color:var(--g)}
+nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+input[type=text],input[type=number],input[type=date],input[type=time]{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;width:100%;min-height:44px;outline:none}
+input:focus{border-color:var(--g)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cell{aspect-ratio:1;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:12px;color:var(--mut);border:1px solid transparent;cursor:pointer}
+.cell.f{background:var(--g);color:#04170b;font-weight:700}
+.cell.p{background:var(--gd);color:#c9f7dc}
+.cell.fu{background:none;border:1px dashed var(--line);cursor:default}
+.cell.t{border-color:#fff}
+.wk{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:10px}
+.wk div{flex:1;background:var(--g);border-radius:6px 6px 2px 2px;min-height:3px;position:relative}
+.wk span{position:absolute;top:100%;left:0;right:0;text-align:center;font-size:10px;color:var(--mut);margin-top:3px}
+.sw{width:50px;height:30px;border-radius:20px;background:#333b37;border:0;position:relative;flex:none;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--g)}.sw.on::after{left:23px}
+#toast{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;max-width:496px;margin:0 auto;background:var(--g);color:#04170b;padding:14px 16px;border-radius:16px;font-weight:700;transform:translateY(-140%);transition:.35s;z-index:9}
+#toast.s{transform:none}
+.sheet{background:var(--card2);border-radius:18px;padding:14px;margin-top:12px}
+.warn{background:#2a2410;border:1px solid #5a4a14;color:#f1d98a;border-radius:14px;padding:12px;font-size:13px}
+.hr{height:1px;background:var(--line);margin:14px 0}
+</style></head><body>
+<div id="toast"></div><div id="app"></div>
+<nav id="nav"></nav>
+<script>
+const KEY='c50v1', N=50;
+const REM0=[{id:'am',l:'Morning start',t:'07:30',on:true},{id:'w1',l:'Water check',t:'11:00',on:true},{id:'w2',l:'Water check',t:'15:00',on:true},{id:'rv',l:'Revision',t:'17:00',on:true},{id:'ev',l:'Evening checklist',t:'20:30',on:true},{id:'bd',l:'Not logged yet?',t:'22:30',on:true}];
+const pad=n=>String(n).padStart(2,'0');
+const ds=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const pd=s=>new Date(s+'T00:00:00');
+const today=()=>ds(new Date());
+const add=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
+const diff=(a,b)=>Math.round((pd(a)-pd(b))/864e5);
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.start)S={start:today(),days:{},cheat:{},rem:REM0,remOn:true,timer:null,fired:{}};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const R=d=>S.days[d]||{};
+function put(d,k,v){S.days[d]=Object.assign({},S.days[d],{[k]:v});save();render()}
+const flags=r=>[!!r.ex,(r.water||0)>=2000,(r.rev||0)>=120,(r.sleep||0)>=8,!!r.sugar,!!r.alc];
+const cnt=d=>flags(R(d)).filter(Boolean).length;
+const full=d=>cnt(d)===6;
+const endDate=()=>add(S.start,N-1);
+const dayNo=d=>diff(d,S.start)+1;
+let tab='home',view=today(),sel=null;
+const names=['Exercise','Water','Revision','Sleep','No sugar','No alcohol or drugs'];
+
+function elapsed(){const t=today(),e=endDate();const last=t<e?t:e;const out=[];for(let d=S.start;d<=last;d=add(d,1))out.push(d);return out}
+function streaks(){const t=today(),e=elapsed();let cur=0,best=0,run=0;e.forEach(d=>{if(full(d)){run++;best=Math.max(best,run)}else run=0});
+ for(let i=e.length-1;i>=0;i--){if(full(e[i]))cur++;else if(e[i]===t)continue;else break}return{cur,best}}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('s');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('s'),5000)}
+const ic={home:'<path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',progress:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',history:'<rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>'};
+const tick='<svg viewBox="0 0 24 24" fill="none" stroke="#04170b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+function go(t){tab=t;sel=null;render();scrollTo(0,0)}
+function nav(){document.getElementById('nav').innerHTML=['home','progress','history','settings'].map(t=>`<button class="${tab===t?'on':''}" onclick="go('${t}')"><svg viewBox="0 0 24 24">${ic[t]}</svg>${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
+
+function home(){
+ const t=today(),r=R(view),n=dayNo(view),e=endDate(),past=view!==t;
+ let head,pct;
+ const shown=Math.min(Math.max(dayNo(t),0),N);
+ const el=elapsed();const fd=el.filter(full).length;
+ pct=Math.round(fd/N*100);
+ const st=streaks();const c=cnt(view);
+ const C=2*Math.PI*56,off=C*(1-fd/N);
+ if(t<S.start)head=`<div class="big">Starts in ${diff(S.start,t)}d</div>`;
+ else if(t>e)head=`<div class="big g">DONE</div>`;
+ else head=`<div class="big">DAY ${shown}<span class="mut" style="font-size:20px;font-weight:600"> / ${N}</span></div>`;
+ const remain=t<S.start?N:Math.max(0,N-shown);
+ let h=`<h1>${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</h1>
+ <div class="card"><div class="top"><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="#222927" stroke-width="10"/><circle cx="66" cy="66" r="56" fill="none" stroke="#2ee072" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .5s"/></svg><b>${pct}%</b></div>
+ <div>${head}<div class="mut" style="margin-top:8px">${remain} days remaining</div><div class="mut">${fd} perfect days so far</div></div></div>
+ <div class="stats"><div><b class="g">${Math.round(c/6*100)}%</b><span class="mut">Today</span></div><div><b>${st.cur}</b><span class="mut">Streak</span></div><div><b>${c}/6</b><span class="mut">Done</span></div></div></div>`;
+ if(past)h+=`<div class="card row"><div><b>Editing ${pd(view).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</b><div class="mut">Past day</div></div><button class="btn p" onclick="view=today();render()">Back to today</button></div>`;
+ if(view<S.start||view>e)h+=`<div class="warn">This date is outside your challenge. You can still log, but it won’t count toward the 50 days.</div><div style="height:12px"></div>`;
+ const f=flags(r);
+ // exercise
+ h+=`<div class="card"><div class="row"><div><b>Exercise</b><div class="mut">Every day</div></div><button class="chk ${f[0]?'on':''}" onclick="put(view,'ex',${!f[0]})">${tick}</button></div>${f[0]?`<div class="btns" style="margin-top:12px"><input type="text" placeholder="What did you do?" value="${(r.exN||'').replace(/"/g,'&quot;')}" onchange="put(view,'exN',this.value)" style="flex:2"><input type="number" inputmode="numeric" placeholder="Min" value="${r.exM||''}" onchange="put(view,'exM',+this.value)" style="flex:1"></div>`:''}</div>`;
+ // water
+ const w=r.water||0;
+ h+=`<div class="card"><div class="row"><div><b>Water</b><div class="mut">${w} / 2000 ml</div></div><button class="chk ${f[1]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,w/20)}%"></i></div>
+ <div class="btns"><button class="btn" onclick="put(view,'water',Math.max(0,(R(view).water||0)-250))">-250</button><button class="btn p" onclick="put(view,'water',(R(view).water||0)+250)">+250</button><button class="btn p" onclick="put(view,'water',(R(view).water||0)+500)">+500</button></div></div>`;
+ // revision
+ const v=r.rev||0,tm=S.timer;
+ h+=`<div class="card"><div class="row"><div><b>Revision</b><div class="mut">${v} / 120 min${v<120?` · ${120-v} left`:''}</div></div><button class="chk ${f[2]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,v/1.2)}%"></i></div>
+ <div class="btns"><button class="btn" onclick="put(view,'rev',Math.max(0,(R(view).rev||0)-15))">-15</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+15)">+15</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+30)">+30</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+60)">+60</button></div>
+ <div class="btns"><button class="btn ${tm?'':'p'}" onclick="timer()">${tm?'Stop timer':'Start timer'}</button>${tm?'<div class="btn" id="tv" style="flex:1;text-align:center;font-variant-numeric:tabular-nums">00:00</div>':''}</div></div>`;
+ // sleep
+ const sl=r.sleep||0;
+ h+=`<div class="card"><div class="row"><div><b>Sleep</b><div class="mut">${sl} / 8 hours</div></div><button class="chk ${f[3]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,sl/.08)}%"></i></div>
+ <div class="btns"><button class="btn" onclick="put(view,'sleep',Math.max(0,(R(view).sleep||0)-.5))">-0.5h</button><button class="btn p" onclick="put(view,'sleep',Math.min(16,(R(view).sleep||0)+.5))">+0.5h</button><button class="btn" onclick="put(view,'sleep',8)">8h</button></div></div>`;
+ // yes/no
+ [[4,'sugar','No unnecessary sugar','Avoided sugar today'],[5,'alc','No alcohol or drugs','Stayed clean today']].forEach(([i,k,a,b])=>{
+  h+=`<div class="card row"><div><b>${a}</b><div class="mut">${b}</div></div><button class="chk ${f[i]?'on':''}" onclick="put(view,'${k}',${!f[i]})">${tick}</button></div>`});
+ // cheat
+ const wi=Math.floor(Math.max(0,diff(view,S.start))/7),used=S.cheat[wi];
+ h+=`<div class="card"><div class="row"><div><b>Weekly cheat</b><div class="mut">Week ${wi+1} · 1 allowed · ${used?'Used on '+pd(used).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'Unused'}</div></div>${used?`<button class="btn" onclick="delete S.cheat[${wi}];save();render()">Undo</button>`:`<button class="btn p" onclick="S.cheat[${wi}]=view;save();render()">Log it</button>`}</div></div>`;
+ return h}
+function timer(){if(S.timer){const m=Math.round((Date.now()-S.timer.t)/60000);const d=S.timer.date;S.timer=null;put(d,'rev',(R(d).rev||0)+m);toast(m+' min added to revision')}else{S.timer={t:Date.now(),date:view};save();render()}}
+
+function progress(){
+ const el=elapsed(),n=el.length||1,fd=el.filter(full).length,st=streaks();
+ const tot=k=>el.reduce((a,d)=>a+(R(d)[k]||0),0);
+ const sl=el.filter(d=>R(d).sleep>0);
+ const rates=[0,1,2,3,4,5].map(i=>Math.round(el.filter(d=>flags(R(d))[i]).length/n*100));
+ let h=`<h1>Progress</h1><div class="card"><div class="row"><div><div class="big g">${Math.round(fd/N*100)}%</div><div class="mut">of challenge complete</div></div><div style="text-align:right"><b style="font-size:22px">${fd}</b><div class="mut">perfect days</div></div></div><div class="bar"><i style="width:${fd/N*100}%"></i></div></div>
+ <div class="card"><div class="row"><div><b style="font-size:22px">${st.cur}</b><div class="mut">Current streak</div></div><div style="text-align:right"><b style="font-size:22px">${st.best}</b><div class="mut">Longest streak</div></div></div></div>
+ <div class="card"><b>Habit completion</b>${names.map((x,i)=>`<div style="margin-top:12px"><div class="row"><span>${i===0?'Exercise consistency':x}</span><span class="mut">${rates[i]}%</span></div><div class="bar" style="margin-top:6px"><i style="width:${rates[i]}%"></i></div></div>`).join('')}</div>
+ <div class="stats"><div><b>${(tot('water')/1000).toFixed(1)}L</b><span class="mut">Water</span></div><div><b>${(tot('rev')/60).toFixed(1)}h</b><span class="mut">Revision</span></div><div><b>${sl.length?(sl.reduce((a,d)=>a+R(d).sleep,0)/sl.length).toFixed(1):'0'}h</b><span class="mut">Avg sleep</span></div></div>
+ <div class="card" style="margin-top:12px"><b>Weekly performance</b><div class="mut">Perfect days per week</div><div class="wk" style="margin-bottom:22px">`;
+ for(let w=0;w<8;w++){let c=0,started=false;for(let i=0;i<7;i++){const d=add(S.start,w*7+i);if(i+w*7<N&&d<=today()){started=true;if(full(d))c++}}h+=`<div style="height:${started?Math.max(3,c/7*100):3}%;${started?'':'opacity:.25'}"><span>${c}</span></div>`}
+ return h+`</div></div>`}
+
+function history(){
+ let h=`<h1>History</h1><div class="card"><div class="grid">`;const t=today();
+ for(let i=0;i<N;i++){const d=add(S.start,i),c=cnt(d);const cl=d>t?'fu':full(d)?'f':c>0?'p':'';h+=`<div class="cell ${cl} ${d===t?'t':''}" ${d>t?'':`onclick="sel='${d}';render()"`}>${i+1}</div>`}
+ h+=`</div><div class="mut" style="margin-top:12px">Bright green = all 6 done. Dim green = partial.</div>`;
+ if(sel){const r=R(sel),f=flags(r);h+=`<div class="sheet"><b>Day ${dayNo(sel)} · ${pd(sel).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</b>
+ ${names.map((x,i)=>`<div class="row" style="margin-top:8px"><span>${x}</span><span class="${f[i]?'g':'mut'}">${f[i]?'Done':'Missed'}</span></div>`).join('')}
+ <div class="mut" style="margin-top:10px">${r.water||0} ml · ${r.rev||0} min revision · ${r.sleep||0}h sleep${r.exN?' · '+r.exN+(r.exM?' '+r.exM+'min':''):''}</div>
+ <button class="btn p" style="width:100%;margin-top:12px" onclick="view=sel;go('home')">Edit this day</button></div>`}
+ return h+'</div>'}
+
+function settings(){
+ const perm='Notification' in window?Notification.permission:'unsupported';
+ let h=`<h1>Settings</h1><div class="card"><b>Challenge dates</b><div class="mut" style="margin:8px 0">Start date</div><input type="date" value="${S.start}" onchange="if(this.value){S.start=this.value;save();render()}"><div class="row" style="margin-top:12px"><span class="mut">End date (day 50)</span><b>${pd(endDate()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</b></div></div>
+ <div class="card"><div class="row"><div><b>Reminders</b><div class="mut">Show when the app is open</div></div><button class="sw ${S.remOn?'on':''}" onclick="S.remOn=!S.remOn;save();render()"></button></div>
+ ${S.rem.map((x,i)=>`<div class="hr"></div><div class="row"><div style="flex:1"><div>${x.l}</div></div><input type="time" value="${x.t}" style="width:110px" onchange="S.rem[${i}].t=this.value;save()"><button class="sw ${x.on?'on':''}" onclick="S.rem[${i}].on=!S.rem[${i}].on;save();render()"></button></div>`).join('')}
+ <div class="warn" style="margin-top:14px"><b>iOS limitation, honestly:</b> this page has no server behind it, and iPhone only delivers notifications to a closed app through Web Push, which needs one. So these reminders appear as a banner at the top <b>while the app is open</b> (or just reopened). Nothing will buzz your phone when it’s closed. For reliable alerts, set recurring alarms in the Clock or Reminders app at the same times.</div></div>
+ <div class="card"><b>Install on iPhone</b><div class="mut" style="margin-top:6px">In Safari tap Share, then Add to Home Screen. It opens full screen and your data stays saved on this device.</div></div>
+ <div class="card"><b>Reset challenge</b><div class="mut" style="margin:6px 0 12px">Deletes all progress and starts again from today.</div><button class="btn" style="width:100%;color:#ff6b6b" onclick="if(confirm('Delete everything and restart?')){localStorage.removeItem(KEY);location.reload()}">Reset challenge</button></div>`;
+ return h}
+
+function render(){nav();document.getElementById('app').innerHTML={home,progress,history,settings}[tab]()}
+function tick1(){
+ const tv=document.getElementById('tv');if(tv&&S.timer){const s=Math.floor((Date.now()-S.timer.t)/1000);tv.textContent=pad(Math.floor(s/60))+':'+pad(s%60)}
+ const n=new Date(),hm=pad(n.getHours())+':'+pad(n.getMinutes()),t=today();
+ if(S.remOn){S.rem.forEach(x=>{if(!x.on||x.t>hm)return;const k=t+x.id;if(S.fired[k])return;
+  S.fired[k]=1;if(x.t<hm&&diff(t,t)===0&&(n.getHours()*60+n.getMinutes())-(+x.t.slice(0,2)*60+ +x.t.slice(3))>90)return;
+  if(x.id==='bd'&&cnt(t)>0)return;
+  toast({am:'Morning. Let’s win today.',w1:'Time for some water.',w2:'Water check. Keep drinking.',rv:'Revision time.',ev:'Evening: tick off your checklist.',bd:'You haven’t logged anything today.'}[x.id]);save()})}
+}
+// icon
+(function(){const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');x.fillStyle='#0b0d0c';x.fillRect(0,0,180,180);x.strokeStyle='#2ee072';x.lineWidth=14;x.lineCap='round';x.beginPath();x.arc(90,90,54,-Math.PI/2,Math.PI*1.1);x.stroke();x.fillStyle='#fff';x.font='bold 46px -apple-system,Helvetica';x.textAlign='center';x.fillText('50',90,106);document.getElementById('ico').href=c.toDataURL('image/png')})();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){const t=today();if(view<t&&!sel&&tab==='home'&&view===S._v)view=t;render()}});
+setInterval(()=>{tick1();if(new Date().getSeconds()<2&&today()!==S._d){S._d=today();if(view<today()&&tab==='home'&&!S._pin)view=today();render()}},1000);
+S._d=today();S._v=view;render();tick1();
+</script></body></html>

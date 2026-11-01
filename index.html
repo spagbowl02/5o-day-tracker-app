@@ -45,7 +45,7 @@ input:focus{border-color:var(--g)}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .cell{aspect-ratio:1;border-radius:10px;background:var(--card2);display:grid;place-items:center;font-size:12px;color:var(--mut);border:1px solid transparent;cursor:pointer}
 .cell.f{background:var(--g);color:#04170b;font-weight:700}
-.cell.p{background:var(--gd);color:#c9f7dc}
+
 .cell.fu{background:none;border:1px dashed var(--line);cursor:default}
 .cell.t{border-color:#fff}
 .wk{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:10px}
@@ -59,6 +59,14 @@ input:focus{border-color:var(--g)}
 .sheet{background:var(--card2);border-radius:18px;padding:14px;margin-top:12px}
 .warn{background:#2a2410;border:1px solid #5a4a14;color:#f1d98a;border-radius:14px;padding:12px;font-size:13px}
 .hr{height:1px;background:var(--line);margin:14px 0}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.chk.pop{animation:pop .35s ease}.chk{cursor:pointer}
+.card{transition:border-color .3s}.card.ok{border-color:#1d5a37}
+.tap{cursor:pointer}.tap:active{opacity:.7}
+.mini{display:flex;gap:8px;margin-top:10px}
+circle[data-k]{transition:stroke-dashoffset .6s ease}
+.cell{transition:background .3s}
+.d14{display:flex;align-items:flex-end;gap:3px;height:70px;margin-top:10px}.d14 div{flex:1;background:var(--g);border-radius:4px 4px 1px 1px}
 </style></head><body>
 <div id="toast"></div><div id="app"></div>
 <nav id="nav"></nav>
@@ -72,17 +80,22 @@ const today=()=>ds(new Date());
 const add=(s,n)=>{const d=pd(s);d.setDate(d.getDate()+n);return ds(d)};
 const diff=(a,b)=>Math.round((pd(a)-pd(b))/864e5);
 let S;
-try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){try{const raw=localStorage.getItem(KEY);if(raw)localStorage.setItem(KEY+'_backup',raw)}catch(_){}}
 if(!S||!S.start)S={start:today(),days:{},cheat:{},rem:REM0,remOn:true,timer:null,fired:{}};
+S.days=S.days||{};S.cheat=S.cheat||{};S.fired=S.fired||{};S.rem=S.rem||[];
+REM0.forEach(x=>{if(!S.rem.some(r=>r.id===x.id))S.rem.push({...x})});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const R=d=>S.days[d]||{};
-function put(d,k,v){S.days[d]=Object.assign({},S.days[d],{[k]:v});save();render()}
+function put(d,k,v){const o=flags(R(d));S.days[d]=Object.assign({},S.days[d],{[k]:v});save();const n=flags(R(d));pop=n.findIndex((x,i)=>x&&!o[i]);render();pop=-1;if(n.every(Boolean)&&!o.every(Boolean))toast('Perfect day. All 6 done.')}
+function add_(k,n){put(view,k,Math.max(0,(R(view)[k]||0)+n))}
+function cust(id,k,m){const v=parseFloat(document.getElementById(id).value);if(v>0)add_(k,Math.round(v*m));else toast('Enter an amount first')}
+function setStart(v){if(!v){render();return}if(v!==S.start&&Object.keys(S.days).length&&!confirm('Your logs are kept, but Day 1 moves to this date. Continue?')){render();return}S.start=v;save();render()}
 const flags=r=>[!!r.ex,(r.water||0)>=2000,(r.rev||0)>=120,(r.sleep||0)>=8,!!r.sugar,!!r.alc];
 const cnt=d=>flags(R(d)).filter(Boolean).length;
 const full=d=>cnt(d)===6;
 const endDate=()=>add(S.start,N-1);
 const dayNo=d=>diff(d,S.start)+1;
-let tab='home',view=today(),sel=null;
+let tab='home',view=today(),sel=null,pop=-1,lastDay=today();
 const names=['Exercise','Water','Revision','Sleep','No sugar','No alcohol or drugs'];
 
 function elapsed(){const t=today(),e=endDate();const last=t<e?t:e;const out=[];for(let d=S.start;d<=last;d=add(d,1))out.push(d);return out}
@@ -95,42 +108,39 @@ function go(t){tab=t;sel=null;render();scrollTo(0,0)}
 function nav(){document.getElementById('nav').innerHTML=['home','progress','history','settings'].map(t=>`<button class="${tab===t?'on':''}" onclick="go('${t}')"><svg viewBox="0 0 24 24">${ic[t]}</svg>${t[0].toUpperCase()+t.slice(1)}</button>`).join('')}
 
 function home(){
- const t=today(),r=R(view),n=dayNo(view),e=endDate(),past=view!==t;
- let head,pct;
+ const t=today(),r=R(view),past=view!==t,e=endDate();
  const shown=Math.min(Math.max(dayNo(t),0),N);
- const el=elapsed();const fd=el.filter(full).length;
- pct=Math.round(fd/N*100);
- const st=streaks();const c=cnt(view);
- const C=2*Math.PI*56,off=C*(1-fd/N);
- if(t<S.start)head=`<div class="big">Starts in ${diff(S.start,t)}d</div>`;
- else if(t>e)head=`<div class="big g">DONE</div>`;
- else head=`<div class="big">DAY ${shown}<span class="mut" style="font-size:20px;font-weight:600"> / ${N}</span></div>`;
- const remain=t<S.start?N:Math.max(0,N-shown);
+ const el=elapsed(),fd=el.filter(full).length,st=streaks();
+ const c=cnt(view),pct=t<S.start?0:Math.round(shown/N*100),left=t<S.start?N:Math.max(0,N-shown);
+ const C=2*Math.PI*56;
+ const head=t<S.start?`Starts in ${diff(S.start,t)}d`:t>e?'Challenge complete':`Day ${shown} of ${N}`;
  let h=`<h1>${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</h1>
- <div class="card"><div class="top"><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="#222927" stroke-width="10"/><circle cx="66" cy="66" r="56" fill="none" stroke="#2ee072" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 66 66)" style="transition:stroke-dashoffset .5s"/></svg><b>${pct}%</b></div>
- <div>${head}<div class="mut" style="margin-top:8px">${remain} days remaining</div><div class="mut">${fd} perfect days so far</div></div></div>
- <div class="stats"><div><b class="g">${Math.round(c/6*100)}%</b><span class="mut">Today</span></div><div><b>${st.cur}</b><span class="mut">Streak</span></div><div><b>${c}/6</b><span class="mut">Done</span></div></div></div>`;
+ <div class="card"><div class="top"><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="#222927" stroke-width="10"/><circle data-k="ring" data-off="${C*(1-c/6)}" cx="66" cy="66" r="56" fill="none" stroke="#2ee072" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" transform="rotate(-90 66 66)"/></svg><b>${c}/6</b></div>
+ <div style="flex:1"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em">${head}</div><div class="mut">${left} days remaining</div><div class="bar"><i data-k="ov" data-w="${pct}"></i></div><div class="mut" style="margin-top:6px">${pct}% of challenge</div></div></div>
+ <div class="stats"><div><b>${st.cur}</b><span class="mut">Streak</span></div><div><b>${fd}</b><span class="mut">Perfect days</span></div><div><b class="g">${Math.round(c/6*100)}%</b><span class="mut">${past?'That day':'Today'}</span></div></div></div>`;
  if(past)h+=`<div class="card row"><div><b>Editing ${pd(view).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</b><div class="mut">Past day</div></div><button class="btn p" onclick="view=today();render()">Back to today</button></div>`;
  if(view<S.start||view>e)h+=`<div class="warn">This date is outside your challenge. You can still log, but it won’t count toward the 50 days.</div><div style="height:12px"></div>`;
  const f=flags(r);
- // exercise
- h+=`<div class="card"><div class="row"><div><b>Exercise</b><div class="mut">Every day</div></div><button class="chk ${f[0]?'on':''}" onclick="put(view,'ex',${!f[0]})">${tick}</button></div>${f[0]?`<div class="btns" style="margin-top:12px"><input type="text" placeholder="What did you do?" value="${(r.exN||'').replace(/"/g,'&quot;')}" onchange="put(view,'exN',this.value)" style="flex:2"><input type="number" inputmode="numeric" placeholder="Min" value="${r.exM||''}" onchange="put(view,'exM',+this.value)" style="flex:1"></div>`:''}</div>`;
- // water
+ const K=(i,on)=>`<div class="chk ${on?'on':''} ${pop===i?'pop':''}">${tick}</div>`;
+ const card=(i,x)=>`<div class="card ${f[i]?'ok':''}">${x}</div>`;
+ const tg=(i,k,a,b)=>card(i,`<div class="row tap" onclick="put(view,'${k}',!R(view).${k})"><div><b>${a}</b><div class="mut">${b}</div></div>${K(i,f[i])}</div>`);
+ const ex=[r.exN,r.exM?r.exM+' min':''].filter(Boolean).join(' · ');
+ h+=card(0,`<div class="row tap" onclick="put(view,'ex',!R(view).ex)"><div><b>Exercise</b><div class="mut">${f[0]?(ex||'Done'):'Tap when done'}</div></div>${K(0,f[0])}</div>${f[0]?`<div class="mini"><input type="text" placeholder="What did you do? (optional)" value="${(r.exN||'').replace(/"/g,'&quot;')}" onchange="put(view,'exN',this.value)" style="flex:2"><input type="number" inputmode="numeric" placeholder="Min" value="${r.exM||''}" onchange="put(view,'exM',+this.value)" style="flex:1"></div>`:''}`);
  const w=r.water||0;
- h+=`<div class="card"><div class="row"><div><b>Water</b><div class="mut">${w} / 2000 ml</div></div><button class="chk ${f[1]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,w/20)}%"></i></div>
- <div class="btns"><button class="btn" onclick="put(view,'water',Math.max(0,(R(view).water||0)-250))">-250</button><button class="btn p" onclick="put(view,'water',(R(view).water||0)+250)">+250</button><button class="btn p" onclick="put(view,'water',(R(view).water||0)+500)">+500</button></div></div>`;
- // revision
+ h+=card(1,`<div class="row"><div><b>Water</b><div class="mut">${w} / 2000 ml</div></div>${K(1,f[1])}</div><div class="bar"><i data-k="wa" data-w="${Math.min(100,w/20)}"></i></div>
+ <div class="btns"><button class="btn" onclick="add_('water',-250)">-250</button><button class="btn p" onclick="add_('water',250)">+250</button><button class="btn p" onclick="add_('water',500)">+500</button></div>
+ <div class="mini"><input type="number" inputmode="numeric" id="cw" placeholder="Custom ml"><button class="btn" style="flex:none" onclick="cust('cw','water',1)">Add</button></div>`);
  const v=r.rev||0,tm=S.timer;
- h+=`<div class="card"><div class="row"><div><b>Revision</b><div class="mut">${v} / 120 min${v<120?` · ${120-v} left`:''}</div></div><button class="chk ${f[2]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,v/1.2)}%"></i></div>
- <div class="btns"><button class="btn" onclick="put(view,'rev',Math.max(0,(R(view).rev||0)-15))">-15</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+15)">+15</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+30)">+30</button><button class="btn" onclick="put(view,'rev',(R(view).rev||0)+60)">+60</button></div>
- <div class="btns"><button class="btn ${tm?'':'p'}" onclick="timer()">${tm?'Stop timer':'Start timer'}</button>${tm?'<div class="btn" id="tv" style="flex:1;text-align:center;font-variant-numeric:tabular-nums">00:00</div>':''}</div></div>`;
- // sleep
+ h+=card(2,`<div class="row"><div><b>Revision</b><div class="mut">${v} / 120 min${v<120?` · ${120-v} left`:''}</div></div>${K(2,f[2])}</div><div class="bar"><i data-k="rv" data-w="${Math.min(100,v/1.2)}"></i></div>
+ <div class="btns"><button class="btn p" onclick="timer()">${tm?'Stop and save':'Start timer'}</button>${tm?'<div class="btn" id="tv" style="text-align:center;font-variant-numeric:tabular-nums">00:00</div>':''}</div>
+ <div class="btns"><button class="btn" onclick="add_('rev',-15)">-15</button><button class="btn" onclick="add_('rev',15)">+15</button><button class="btn" onclick="add_('rev',30)">+30</button><button class="btn" onclick="add_('rev',60)">+60</button></div>
+ <div class="mini"><input type="number" inputmode="numeric" id="cr" placeholder="Custom minutes"><button class="btn" style="flex:none" onclick="cust('cr','rev',1)">Add</button></div>`);
  const sl=r.sleep||0;
- h+=`<div class="card"><div class="row"><div><b>Sleep</b><div class="mut">${sl} / 8 hours</div></div><button class="chk ${f[3]?'on':''}" style="pointer-events:none">${tick}</button></div><div class="bar"><i style="width:${Math.min(100,sl/.08)}%"></i></div>
- <div class="btns"><button class="btn" onclick="put(view,'sleep',Math.max(0,(R(view).sleep||0)-.5))">-0.5h</button><button class="btn p" onclick="put(view,'sleep',Math.min(16,(R(view).sleep||0)+.5))">+0.5h</button><button class="btn" onclick="put(view,'sleep',8)">8h</button></div></div>`;
- // yes/no
- [[4,'sugar','No unnecessary sugar','Avoided sugar today'],[5,'alc','No alcohol or drugs','Stayed clean today']].forEach(([i,k,a,b])=>{
-  h+=`<div class="card row"><div><b>${a}</b><div class="mut">${b}</div></div><button class="chk ${f[i]?'on':''}" onclick="put(view,'${k}',${!f[i]})">${tick}</button></div>`});
+ h+=card(3,`<div class="row"><div><b>Sleep</b><div class="mut">${sl} / 8 hours</div></div>${K(3,f[3])}</div><div class="bar"><i data-k="sl" data-w="${Math.min(100,sl/.08)}"></i></div>
+ <div class="btns">${[6,7,8,9].map(x=>`<button class="btn ${sl===x?'p':''}" onclick="put(view,'sleep',${x})">${x}h</button>`).join('')}</div>
+ <div class="btns"><button class="btn" onclick="add_('sleep',-.5)">-0.5h</button><button class="btn" onclick="add_('sleep',.5)">+0.5h</button></div>`);
+ h+=tg(4,'sugar','No unnecessary sugar','Tap if you avoided it today');
+ h+=tg(5,'alc','No alcohol or drugs','Tap if you stayed clean today');
  // cheat
  const wi=Math.floor(Math.max(0,diff(view,S.start))/7),used=S.cheat[wi];
  h+=`<div class="card"><div class="row"><div><b>Weekly cheat</b><div class="mut">Week ${wi+1} · 1 allowed · ${used?'Used on '+pd(used).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):'Unused'}</div></div>${used?`<button class="btn" onclick="delete S.cheat[${wi}];save();render()">Undo</button>`:`<button class="btn p" onclick="S.cheat[${wi}]=view;save();render()">Log it</button>`}</div></div>`;
@@ -141,19 +151,21 @@ function progress(){
  const el=elapsed(),n=el.length||1,fd=el.filter(full).length,st=streaks();
  const tot=k=>el.reduce((a,d)=>a+(R(d)[k]||0),0);
  const sl=el.filter(d=>R(d).sleep>0);
+ const tp=Math.round(el.reduce((a,d)=>a+cnt(d),0)/(6*n)*100);
  const rates=[0,1,2,3,4,5].map(i=>Math.round(el.filter(d=>flags(R(d))[i]).length/n*100));
- let h=`<h1>Progress</h1><div class="card"><div class="row"><div><div class="big g">${Math.round(fd/N*100)}%</div><div class="mut">of challenge complete</div></div><div style="text-align:right"><b style="font-size:22px">${fd}</b><div class="mut">perfect days</div></div></div><div class="bar"><i style="width:${fd/N*100}%"></i></div></div>
+ let wk='';const t=today();
+ for(let w=0;w<8;w++){const den=Math.min(7,N-w*7);let c=0,go=false;for(let i=0;i<den;i++){const d=add(S.start,w*7+i);if(d<=t){go=true;if(full(d))c++}}wk+=`<div style="height:${go?Math.max(3,c/den*100):3}%;${go?'':'opacity:.25'}"><span>${go?c+'/'+den:''}<br>W${w+1}</span></div>`}
+ return `<h1>Progress</h1><div class="card"><div class="row"><div><div class="big g">${tp}%</div><div class="mut">of daily targets completed</div></div><div style="text-align:right"><b style="font-size:22px">${fd}</b><div class="mut">perfect days</div></div></div><div class="bar"><i style="width:${tp}%"></i></div></div>
  <div class="card"><div class="row"><div><b style="font-size:22px">${st.cur}</b><div class="mut">Current streak</div></div><div style="text-align:right"><b style="font-size:22px">${st.best}</b><div class="mut">Longest streak</div></div></div></div>
+ <div class="card"><b>Daily consistency</b><div class="mut">Targets done per day, last 14 days</div><div class="d14">${el.slice(-14).map(d=>`<div style="height:${Math.max(4,cnt(d)/6*100)}%;${full(d)?'':'opacity:.45'}"></div>`).join('')}</div></div>
+ <div class="card"><b>Weekly consistency</b><div class="mut">Perfect days per week</div><div class="wk" style="margin-bottom:34px">${wk}</div></div>
  <div class="card"><b>Habit completion</b>${names.map((x,i)=>`<div style="margin-top:12px"><div class="row"><span>${i===0?'Exercise consistency':x}</span><span class="mut">${rates[i]}%</span></div><div class="bar" style="margin-top:6px"><i style="width:${rates[i]}%"></i></div></div>`).join('')}</div>
- <div class="stats"><div><b>${(tot('water')/1000).toFixed(1)}L</b><span class="mut">Water</span></div><div><b>${(tot('rev')/60).toFixed(1)}h</b><span class="mut">Revision</span></div><div><b>${sl.length?(sl.reduce((a,d)=>a+R(d).sleep,0)/sl.length).toFixed(1):'0'}h</b><span class="mut">Avg sleep</span></div></div>
- <div class="card" style="margin-top:12px"><b>Weekly performance</b><div class="mut">Perfect days per week</div><div class="wk" style="margin-bottom:22px">`;
- for(let w=0;w<8;w++){let c=0,started=false;for(let i=0;i<7;i++){const d=add(S.start,w*7+i);if(i+w*7<N&&d<=today()){started=true;if(full(d))c++}}h+=`<div style="height:${started?Math.max(3,c/7*100):3}%;${started?'':'opacity:.25'}"><span>${c}</span></div>`}
- return h+`</div></div>`}
+ <div class="stats"><div><b>${(tot('water')/1000).toFixed(1)}L</b><span class="mut">Water</span></div><div><b>${(tot('rev')/60).toFixed(1)}h</b><span class="mut">Revision</span></div><div><b>${sl.length?(sl.reduce((a,d)=>a+R(d).sleep,0)/sl.length).toFixed(1):'0'}h</b><span class="mut">Avg sleep</span></div></div>`}
 
 function history(){
  let h=`<h1>History</h1><div class="card"><div class="grid">`;const t=today();
- for(let i=0;i<N;i++){const d=add(S.start,i),c=cnt(d);const cl=d>t?'fu':full(d)?'f':c>0?'p':'';h+=`<div class="cell ${cl} ${d===t?'t':''}" ${d>t?'':`onclick="sel='${d}';render()"`}>${i+1}</div>`}
- h+=`</div><div class="mut" style="margin-top:12px">Bright green = all 6 done. Dim green = partial.</div>`;
+ for(let i=0;i<N;i++){const d=add(S.start,i),c=cnt(d);const cl=d>t?'fu':full(d)?'f':'';h+=`<div class="cell ${cl} ${d===t?'t':''}" ${d>t?'':`onclick="sel='${d}';render()"`}>${i+1}</div>`}
+ h+=`</div><div class="mut" style="margin-top:12px">Green = all 6 done. Grey = not complete.</div>`;
  if(sel){const r=R(sel),f=flags(r);h+=`<div class="sheet"><b>Day ${dayNo(sel)} · ${pd(sel).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</b>
  ${names.map((x,i)=>`<div class="row" style="margin-top:8px"><span>${x}</span><span class="${f[i]?'g':'mut'}">${f[i]?'Done':'Missed'}</span></div>`).join('')}
  <div class="mut" style="margin-top:10px">${r.water||0} ml · ${r.rev||0} min revision · ${r.sleep||0}h sleep${r.exN?' · '+r.exN+(r.exM?' '+r.exM+'min':''):''}</div>
@@ -161,27 +173,40 @@ function history(){
  return h+'</div>'}
 
 function settings(){
- const perm='Notification' in window?Notification.permission:'unsupported';
- let h=`<h1>Settings</h1><div class="card"><b>Challenge dates</b><div class="mut" style="margin:8px 0">Start date</div><input type="date" value="${S.start}" onchange="if(this.value){S.start=this.value;save();render()}"><div class="row" style="margin-top:12px"><span class="mut">End date (day 50)</span><b>${pd(endDate()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</b></div></div>
+  let h=`<h1>Settings</h1><div class="card"><b>Challenge dates</b><div class="mut" style="margin:8px 0">Start date</div><input type="date" value="${S.start}" onchange="setStart(this.value)"><div class="row" style="margin-top:12px"><span class="mut">End date (day 50)</span><b>${pd(endDate()).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</b></div></div>
  <div class="card"><div class="row"><div><b>Reminders</b><div class="mut">Show when the app is open</div></div><button class="sw ${S.remOn?'on':''}" onclick="S.remOn=!S.remOn;save();render()"></button></div>
  ${S.rem.map((x,i)=>`<div class="hr"></div><div class="row"><div style="flex:1"><div>${x.l}</div></div><input type="time" value="${x.t}" style="width:110px" onchange="S.rem[${i}].t=this.value;save()"><button class="sw ${x.on?'on':''}" onclick="S.rem[${i}].on=!S.rem[${i}].on;save();render()"></button></div>`).join('')}
- <div class="warn" style="margin-top:14px"><b>iOS limitation, honestly:</b> this page has no server behind it, and iPhone only delivers notifications to a closed app through Web Push, which needs one. So these reminders appear as a banner at the top <b>while the app is open</b> (or just reopened). Nothing will buzz your phone when it’s closed. For reliable alerts, set recurring alarms in the Clock or Reminders app at the same times.</div></div>
+ <div class="warn" style="margin-top:14px"><b>iOS limitation, honestly:</b> this page has no server behind it, and iPhone only delivers notifications to a closed app through Web Push, which needs one. So these reminders appear as a banner at the top <b>while the app is open</b> (or just reopened). Nothing will buzz your phone when it’s closed. For alerts that work when the app is closed, use the Calendar button below.</div></div>
+ <div class="card"><b>Alerts that work when closed</b><div class="mut" style="margin:6px 0 12px">Adds your enabled reminder times to Calendar as daily events with alerts for all 50 days. iOS Calendar rings even when this app is closed.</div><button class="btn p" style="width:100%" onclick="ics()">Add reminders to Calendar</button></div>
  <div class="card"><b>Install on iPhone</b><div class="mut" style="margin-top:6px">In Safari tap Share, then Add to Home Screen. It opens full screen and your data stays saved on this device.</div></div>
  <div class="card"><b>Reset challenge</b><div class="mut" style="margin:6px 0 12px">Deletes all progress and starts again from today.</div><button class="btn" style="width:100%;color:#ff6b6b" onclick="if(confirm('Delete everything and restart?')){localStorage.removeItem(KEY);location.reload()}">Reset challenge</button></div>`;
  return h}
 
-function render(){nav();document.getElementById('app').innerHTML={home,progress,history,settings}[tab]()}
+function ics(){
+ const on=S.rem.filter(x=>x.on);if(!on.length){toast('Turn on a reminder first');return}
+ const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+ let o='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//50DayTracker//EN\r\n';
+ on.forEach(x=>{const [h,m]=x.t.split(':').map(Number),e=Math.min(1439,h*60+m+15),z=S.start.replace(/-/g,'');
+  o+=`BEGIN:VEVENT\r\nUID:${x.id}-${z}@50day\r\nDTSTAMP:${st}\r\nDTSTART:${z}T${pad(h)}${pad(m)}00\r\nDTEND:${z}T${pad(Math.floor(e/60))}${pad(e%60)}00\r\nRRULE:FREQ=DAILY;COUNT=${N}\r\nSUMMARY:${x.l} (50 Day Challenge)\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:${x.l}\r\nTRIGGER:PT0S\r\nEND:VALARM\r\nEND:VEVENT\r\n`});
+ o+='END:VCALENDAR\r\n';
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([o],{type:'text/calendar'}));a.download='50-day-reminders.ics';document.body.appendChild(a);a.click();a.remove();toast('Open the file, then tap Add All')}
+const LW={};
+function anim(){document.querySelectorAll('[data-k]').forEach(el=>{const k=el.dataset.k,r=el.dataset.off!==undefined,to=r?+el.dataset.off:+el.dataset.w,from=LW[k]!==undefined?LW[k]:(r?+el.getAttribute('stroke-dasharray'):0);
+ const set=v=>{if(r)el.style.strokeDashoffset=v;else el.style.width=v+'%'};el.style.transition='none';set(from);el.getBoundingClientRect();el.style.transition='';set(to);LW[k]=to})}
+function render(){nav();document.getElementById('app').innerHTML={home,progress,history,settings}[tab]();anim()}
 function tick1(){
  const tv=document.getElementById('tv');if(tv&&S.timer){const s=Math.floor((Date.now()-S.timer.t)/1000);tv.textContent=pad(Math.floor(s/60))+':'+pad(s%60)}
  const n=new Date(),hm=pad(n.getHours())+':'+pad(n.getMinutes()),t=today();
  if(S.remOn){S.rem.forEach(x=>{if(!x.on||x.t>hm)return;const k=t+x.id;if(S.fired[k])return;
-  S.fired[k]=1;if(x.t<hm&&diff(t,t)===0&&(n.getHours()*60+n.getMinutes())-(+x.t.slice(0,2)*60+ +x.t.slice(3))>90)return;
-  if(x.id==='bd'&&cnt(t)>0)return;
+  S.fired[k]=1;if((n.getHours()*60+n.getMinutes())-(+x.t.slice(0,2)*60+ +x.t.slice(3))>90){save();return}
+  if((x.id==='bd'&&cnt(t)>0)||(x.id==='ev'&&full(t))){save();return}
   toast({am:'Morning. Let’s win today.',w1:'Time for some water.',w2:'Water check. Keep drinking.',rv:'Revision time.',ev:'Evening: tick off your checklist.',bd:'You haven’t logged anything today.'}[x.id]);save()})}
 }
 // icon
 (function(){const c=document.createElement('canvas');c.width=c.height=180;const x=c.getContext('2d');x.fillStyle='#0b0d0c';x.fillRect(0,0,180,180);x.strokeStyle='#2ee072';x.lineWidth=14;x.lineCap='round';x.beginPath();x.arc(90,90,54,-Math.PI/2,Math.PI*1.1);x.stroke();x.fillStyle='#fff';x.font='bold 46px -apple-system,Helvetica';x.textAlign='center';x.fillText('50',90,106);document.getElementById('ico').href=c.toDataURL('image/png')})();
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){const t=today();if(view<t&&!sel&&tab==='home'&&view===S._v)view=t;render()}});
-setInterval(()=>{tick1();if(new Date().getSeconds()<2&&today()!==S._d){S._d=today();if(view<today()&&tab==='home'&&!S._pin)view=today();render()}},1000);
-S._d=today();S._v=view;render();tick1();
+function rollover(){const t=today();if(t!==lastDay){if(view===lastDay)view=t;lastDay=t;render()}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){rollover();tick1()}});
+setInterval(()=>{rollover();tick1()},1000);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+render();tick1();
 </script></body></html>

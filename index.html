@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-title" content="50 Days">
 <meta name="theme-color" content="#0b0d0c">
 <title>50 Day Challenge</title>
+<link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" id="ico" href="">
 <style>
 :root{--bg:#0b0d0c;--card:#151917;--card2:#1c211f;--line:#262c29;--tx:#fff;--mut:#8a948f;--g:#2ee072;--gd:#14472a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
@@ -64,6 +65,9 @@ input:focus{border-color:var(--g)}
 .card{transition:border-color .3s}.card.ok{border-color:#1d5a37}
 .tap{cursor:pointer}.tap:active{opacity:.7}
 .mini{display:flex;gap:8px;margin-top:10px}
+.nv{background:none;border:0;color:var(--mut);font-size:30px;line-height:1;padding:4px 16px;min-height:44px;cursor:pointer}.nv:disabled{opacity:.2}
+.ring.full svg{filter:drop-shadow(0 0 8px rgba(46,224,114,.45))}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 circle[data-k]{transition:stroke-dashoffset .6s ease}
 .cell{transition:background .3s}
 .d14{display:flex;align-items:flex-end;gap:3px;height:70px;margin-top:10px}.d14 div{flex:1;background:var(--g);border-radius:4px 4px 1px 1px}
@@ -87,6 +91,7 @@ REM0.forEach(x=>{if(!S.rem.some(r=>r.id===x.id))S.rem.push({...x})});
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 const R=d=>S.days[d]||{};
 function put(d,k,v){const o=flags(R(d));S.days[d]=Object.assign({},S.days[d],{[k]:v});save();const n=flags(R(d));pop=n.findIndex((x,i)=>x&&!o[i]);render();pop=-1;if(n.every(Boolean)&&!o.every(Boolean))toast('Perfect day. All 6 done.')}
+function shift(n){const v=add(view,n);if(v>=S.start&&v<=today()){view=v;render()}}
 function add_(k,n){put(view,k,Math.max(0,(R(view)[k]||0)+n))}
 function cust(id,k,m){const v=parseFloat(document.getElementById(id).value);if(v>0)add_(k,Math.round(v*m));else toast('Enter an amount first')}
 function setStart(v){if(!v){render();return}if(v!==S.start&&Object.keys(S.days).length&&!confirm('Your logs are kept, but Day 1 moves to this date. Continue?')){render();return}S.start=v;save();render()}
@@ -113,11 +118,13 @@ function home(){
  const el=elapsed(),fd=el.filter(full).length,st=streaks();
  const c=cnt(view),pct=t<S.start?0:Math.round(shown/N*100),left=t<S.start?N:Math.max(0,N-shown);
  const C=2*Math.PI*56;
+ const ff=flags(r),todo=[];if(!ff[0])todo.push('exercise');if(!ff[1])todo.push(`${2000-(r.water||0)}ml water`);if(!ff[2])todo.push(`${120-(r.rev||0)}min revision`);if(!ff[3])todo.push(`${+(8-(r.sleep||0)).toFixed(1)}h sleep`);if(!ff[4])todo.push('sugar');if(!ff[5])todo.push('alcohol/drugs');
+ const nudge=c===6?'<div class="mut" style="margin-top:12px;text-align:center">Perfect day. Nothing left to do.</div>':`<div class="mut" style="margin-top:12px">Left: ${todo.join(', ')}${!past&&st.cur>0?` · keep your ${st.cur}-day streak alive`:''}</div>`;
  const head=t<S.start?`Starts in ${diff(S.start,t)}d`:t>e?'Challenge complete':`Day ${shown} of ${N}`;
- let h=`<h1>${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</h1>
- <div class="card"><div class="top"><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="#222927" stroke-width="10"/><circle data-k="ring" data-off="${C*(1-c/6)}" cx="66" cy="66" r="56" fill="none" stroke="#2ee072" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" transform="rotate(-90 66 66)"/></svg><b>${c}/6</b></div>
+ let h=`<div class="row" style="margin-bottom:8px"><button class="nv" onclick="shift(-1)" ${view<=S.start?'disabled':''}>‹</button><h1 style="margin:0;text-align:center">${past?'':'Today · '}${pd(view).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</h1><button class="nv" onclick="shift(1)" ${view>=t?'disabled':''}>›</button></div>
+ <div class="card"><div class="top"><div class="ring ${c===6?'full':''}"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="#222927" stroke-width="10"/><circle data-k="ring" data-off="${C*(1-c/6)}" cx="66" cy="66" r="56" fill="none" stroke="#2ee072" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C}" transform="rotate(-90 66 66)"/></svg><b>${c}/6</b></div>
  <div style="flex:1"><div style="font-size:26px;font-weight:800;letter-spacing:-.02em">${head}</div><div class="mut">${left} days remaining</div><div class="bar"><i data-k="ov" data-w="${pct}"></i></div><div class="mut" style="margin-top:6px">${pct}% of challenge</div></div></div>
- <div class="stats"><div><b>${st.cur}</b><span class="mut">Streak</span></div><div><b>${fd}</b><span class="mut">Perfect days</span></div><div><b class="g">${Math.round(c/6*100)}%</b><span class="mut">${past?'That day':'Today'}</span></div></div></div>`;
+ <div class="stats"><div><b>${st.cur}</b><span class="mut">Streak</span></div><div><b>${fd}</b><span class="mut">Perfect days</span></div><div><b class="g">${Math.round(c/6*100)}%</b><span class="mut">${past?'That day':'Today'}</span></div></div>${nudge}</div>`;
  if(past)h+=`<div class="card row"><div><b>Editing ${pd(view).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</b><div class="mut">Past day</div></div><button class="btn p" onclick="view=today();render()">Back to today</button></div>`;
  if(view<S.start||view>e)h+=`<div class="warn">This date is outside your challenge. You can still log, but it won’t count toward the 50 days.</div><div style="height:12px"></div>`;
  const f=flags(r);
@@ -178,10 +185,14 @@ function settings(){
  ${S.rem.map((x,i)=>`<div class="hr"></div><div class="row"><div style="flex:1"><div>${x.l}</div></div><input type="time" value="${x.t}" style="width:110px" onchange="S.rem[${i}].t=this.value;save()"><button class="sw ${x.on?'on':''}" onclick="S.rem[${i}].on=!S.rem[${i}].on;save();render()"></button></div>`).join('')}
  <div class="warn" style="margin-top:14px"><b>iOS limitation, honestly:</b> this page has no server behind it, and iPhone only delivers notifications to a closed app through Web Push, which needs one. So these reminders appear as a banner at the top <b>while the app is open</b> (or just reopened). Nothing will buzz your phone when it’s closed. For alerts that work when the app is closed, use the Calendar button below.</div></div>
  <div class="card"><b>Alerts that work when closed</b><div class="mut" style="margin:6px 0 12px">Adds your enabled reminder times to Calendar as daily events with alerts for all 50 days. iOS Calendar rings even when this app is closed.</div><button class="btn p" style="width:100%" onclick="ics()">Add reminders to Calendar</button></div>
- <div class="card"><b>Install on iPhone</b><div class="mut" style="margin-top:6px">In Safari tap Share, then Add to Home Screen. It opens full screen and your data stays saved on this device.</div></div>
+ <div class="card"><b>Install on iPhone</b><div class="mut" style="margin-top:6px">In Safari tap Share, then Add to Home Screen. and your data stays saved on this device.${navigator.serviceWorker&&navigator.serviceWorker.controller?'<div class="g" style="margin-top:8px">Offline ready</div>':''}</div></div>
+ <div class="card"><b>Backup</b><div class="mut" style="margin:6px 0 12px">Your data lives only on this phone. Copy a backup into Notes now and then.</div><div class="btns" style="margin-top:0"><button class="btn p" onclick="backup()">Copy backup</button><button class="btn" onclick="restore()">Restore</button></div></div>
  <div class="card"><b>Reset challenge</b><div class="mut" style="margin:6px 0 12px">Deletes all progress and starts again from today.</div><button class="btn" style="width:100%;color:#ff6b6b" onclick="if(confirm('Delete everything and restart?')){localStorage.removeItem(KEY);location.reload()}">Reset challenge</button></div>`;
  return h}
 
+function backup(){const j=JSON.stringify(S);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(j).then(()=>toast('Backup copied. Paste it into Notes to keep it safe.'),()=>prompt('Copy this backup',j));else prompt('Copy this backup',j)}
+function restore(){const j=prompt('Paste your backup here');if(!j)return;let o;try{o=JSON.parse(j);if(!o.start||typeof o.days!=='object')throw 0}catch(e){toast('That does not look like a valid backup');return}
+ if(!confirm('Replace everything on this device with this backup?'))return;try{localStorage.setItem(KEY+'_pre',JSON.stringify(S));localStorage.setItem(KEY,j)}catch(e){toast('Could not restore');return}location.reload()}
 function ics(){
  const on=S.rem.filter(x=>x.on);if(!on.length){toast('Turn on a reminder first');return}
  const st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
@@ -208,5 +219,6 @@ function rollover(){const t=today();if(t!==lastDay){if(view===lastDay)view=t;las
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){rollover();tick1()}});
 setInterval(()=>{rollover();tick1()},1000);
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 render();tick1();
 </script></body></html>
